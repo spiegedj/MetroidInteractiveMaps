@@ -13,43 +13,63 @@ Map.prototype = {
 
     boundX: 5000,
     boundY: 5000,
-    size: 50,
-    grid: null,
-    roomList: null,
+    size: 30,
+    rooms: null,
+    selectedRoom: null,
     //#endregion
-
-    //#region Events 
-
-    onClick: function Map$onClick(position)
-    {
-        this.addNewRoom(position.x, position.y);
-    },
-
-    //#endregion Events
 
     //#region Grid Functions
 
-    mouseToGrid: function Map$mouseToGrid(mousePosition)
+    addBlock: function Map$addBlock(position) {
+        this.selectedRoom = this.getRoomAt(position) || this.selectedRoom;
+
+        if (!this.selectedRoom) {
+            this.addNewRoom({ grid: [] });
+        }
+
+        this.selectedRoom.addNewBlock(position.x, position.y);
+    },
+
+    removeBlock: function Map$removeBlock(position)
     {
-        var x = Math.floor(mousePosition.x / this.size);
-        var y = Math.floor(mousePosition.y / this.size);
+        var roomWithBlock = this.getRoomAt(position);
+        if (roomWithBlock)
+        {
+            roomWithBlock.removeBlock(position.x, position.y);
+            this.selectedRoom = roomWithBlock;
+        }
+    },
+
+    toggleStyle: function Map$toggleStyle()
+    {
+        if (!this.selectedRoom) return;
+
+        this.selectedRoom.toggleStyle();
+    },
+
+    getRoomAt: function Map$getRoomAt(position)
+    {
+        for (var i = 0; i < this.rooms.length; i++)
+        {
+            if (this.rooms[i].hasBlockAt(position.x, position.y)) {
+                return this.rooms[i];
+            }
+        }
+
+        return null;
+    },
+
+    mouseToGrid: function Map$mouseToGrid(mousePosition, translation)
+    {
+        var x = Math.floor((mousePosition.x - translation.x) / this.size);
+        var y = Math.floor((mousePosition.y - translation.y) / this.size);
         return { x: x, y: y };
     },
 
-    getRoomAt: function Map$getRoomAt(x, y)
-    {
-        if (!this.grid[x]) return null;
-        
-        return this.grid[x][y] || null;
-    },
-
-    addNewRoom: function Map$addNewRoom(x, y)
-    {
-        var roomObj = new Room(this.__canvas, this.__ctx, this, {x: x, y: y});
-        this.grid[roomObj.x] = this.grid[roomObj.x] || {};
-        this.grid[roomObj.x][roomObj.y] = roomObj;
-
-        this.roomList.push(roomObj)
+    addNewRoom: function Map$addNewRoom(room) {
+        var roomObj = new Room(this.__canvas, this.__ctx, this, room);
+        this.rooms.push(roomObj);
+        this.selectedRoom = roomObj;
     },
 
     //#endregion Grid Functions
@@ -80,7 +100,8 @@ Map.prototype = {
             this.__ctx.stroke();
         }
 
-        this.roomList.forEach(function (room) {
+        // Draw Rooms
+        this.rooms.forEach(function (room) {
             room.draw();
         }, this);
     },
@@ -90,15 +111,24 @@ Map.prototype = {
 
     serialize: function Map$serialize()
     {
-        console.log(JSON.stringify(this));
+        var json = {};
+        json.rooms = [];
+        this.rooms.forEach(function (room) {
+            var jsonRoom = room.serialize();
+            if (jsonRoom) {
+                json.rooms.push(jsonRoom);
+            }
+        }, this);
+
+        console.log(JSON.stringify(json));
     },
 
     deserialize: function Map$deserialize(json)
     {
-        this.grid = {};
-        this.roomList = [];
-        json.grid.forEach(function (room) {
-            this.addNewRoom(room.x, room.y);
+        this.rooms = [];
+        json.rooms.forEach(function (room) {
+
+            this.addNewRoom(room);
         }, this);
     },
 

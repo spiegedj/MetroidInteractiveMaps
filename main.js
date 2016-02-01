@@ -29,6 +29,24 @@ Main.prototype = {
     map: null,
     //#endregion
 
+    //#region Transformations
+
+    translate: function Main$translate(x, y)
+    {
+        x = this.__translation.x + x;
+        y = this.__translation.y + y;
+        x = Math.min(0, x);
+        y = Math.min(0, y);
+
+        x = Math.max(-(this.map.boundX - this.__canvas.width), x);
+        y = Math.max(-(this.map.boundY - this.__canvas.height), y);
+
+        this.__translation = { x: x, y: y };
+        this.draw();
+    },
+
+    //#endregion
+
     //#region Events
 
     initEvents: function Main$initEvents()
@@ -37,8 +55,9 @@ Main.prototype = {
         window.addEventListener("keydown", $$fcd(this, this.__onKeyDown));
 
         this.__canvas.addEventListener("click", $$fcd(this, this.__onClick));
+        this.__canvas.addEventListener("contextmenu", $$fcd(this, this.__onRightClick));
         this.__canvas.addEventListener("mousedown", $$fcd(this, this.__onMouseDown));
-        this.__canvas.addEventListener("mouseup", $$fcd(this, this.__onMouseUp));
+        window.addEventListener("mouseup", $$fcd(this, this.__onMouseUp));
         this.__canvas.addEventListener("mousemove", $$fcd(this, this.__onMouseMove));
 
         this.__canvas.addEventListener("mousewheel", $$fcd(this, this.__onWheel));
@@ -47,10 +66,20 @@ Main.prototype = {
     __onClick: function Main$__onClick(event)
     {
         var mousePosition = this.getMousePosition(event);
-        var gridPosition = this.map.mouseToGrid(mousePosition);
+        var gridPosition = this.map.mouseToGrid(mousePosition, this.__translation);
 
-        this.map.onClick(gridPosition);
+        this.map.addBlock(gridPosition);
         this.draw();
+    },
+
+    __onRightClick: function Main$__onRightClick(event) {
+        event.preventDefault();
+        var mousePosition = this.getMousePosition(event);
+        var gridPosition = this.map.mouseToGrid(mousePosition, this.__translation);
+
+        this.map.removeBlock(gridPosition);
+        this.draw();
+        return false;
     },
 
     __onResize: function Main$__onResize(event)
@@ -72,11 +101,7 @@ Main.prototype = {
             var curMousePosition = this.getMousePosition(event);
             var dx = curMousePosition.x - this.__prevMousePosition.x;
             var dy = curMousePosition.y - this.__prevMousePosition.y;
-            var x = this.__translation.x + dx;
-            var y = this.__translation.y + dy;
-
-            this.__translation = { x: x, y: y };
-            this.draw();
+            this.translate(dx, dy);
 
             this.__prevMousePosition = curMousePosition;
         }
@@ -101,8 +126,15 @@ Main.prototype = {
     __onKeyDown: function Main$__onKeyDown(event)
     {
         switch (event.keyCode) {
+            case 78:
+                this.map.addNewRoom({ grid: [] });
+                break;
             case 83:
                 this.map.serialize();
+                break;
+            case 84:
+                this.map.toggleStyle();
+                this.draw();
                 break;
         }
     },
