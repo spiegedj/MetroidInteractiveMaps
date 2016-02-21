@@ -13,21 +13,43 @@ Map.prototype = {
 
     boundX: 5000,
     boundY: 5000,
-    size: 30,
+    size: 35,
     rooms: null,
     selectedRoom: null,
     //#endregion
 
     //#region Grid Functions
 
-    addBlock: function Map$addBlock(position) {
-        this.selectedRoom = this.getRoomAt(position) || this.selectedRoom;
+    addBlock: function Map$addBlock(position, blockType) {
+        this.selectRoom(position);
 
         if (!this.selectedRoom) {
             this.addNewRoom({ grid: [] });
         }
 
-        this.selectedRoom.addNewBlock(position.x, position.y);
+        this.selectedRoom.addNewBlock(position.x, position.y, blockType);
+    },
+
+    addDoor: function Map$addDoor(direction, doorType)
+    {
+        if (!this.selectedRoom) return;
+
+        this.selectedRoom.addDoor(direction, doorType);
+    },
+
+    selectRoom: function Map$selectRoom(position)
+    {
+        if (this.getRoomAt(position))
+        {
+            if (this.selectedRoom)
+            {
+                this.selectedRoom.isSelected = false;
+                this.selectedRoom.deselectBlock();
+            }
+            this.selectedRoom = this.getRoomAt(position);
+            this.selectedRoom.isSelected = true;
+            this.selectedRoom.selectBlock(position.x, position.y);
+        }
     },
 
     removeBlock: function Map$removeBlock(position)
@@ -102,7 +124,11 @@ Map.prototype = {
 
         // Draw Rooms
         this.rooms.forEach(function (room) {
-            room.draw();
+            room.draw(false);
+        }, this);
+
+        this.rooms.forEach(function (room) {
+            room.secondDraw();
         }, this);
     },
     //#endregion Rendering
@@ -127,7 +153,6 @@ Map.prototype = {
     {
         this.rooms = [];
         json.rooms.forEach(function (room) {
-
             this.addNewRoom(room);
         }, this);
     },

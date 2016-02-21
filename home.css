@@ -11,3 +11,12 @@ html, body {
 
 #canvas {
 }
+
+#output {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 700px;
+    height: 30px;
+    background-color: white;
+}

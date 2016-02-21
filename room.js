@@ -2,6 +2,8 @@ function Room(canvas, context, map, properties) {
     this.__canvas = canvas;
     this.__ctx = context;
     this.__map = map;
+    this.id = guid();
+
     this.deserialize(properties);
 
     this.draw();
@@ -13,75 +15,77 @@ Room.prototype = {
     __ctx: null,
     __map: null,
     __grid: null,
+    __selectedBlock: null,
 
+    isSelected: false,
+    id: null,
     style: null,
-    lineColor: 'rgb(255,253,249)',
-    roomColor: "rgb(0,4,252)",
     //#endregion
 
     //#region Rendering
-    draw: function Map$draw() {
+    draw: function Room$draw() {
         var size = this.__map.size;
         var ctx = this.__ctx;
 
-        ctx.fillStyle = this.style.roomColor;
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = this.style.lineColor;
+        ctx.fillStyle = this.style.getRoomColor();
+        ctx.lineWidth = 4;
+
+        if (!this.isSelected) {
+            ctx.strokeStyle = this.style.getLineColor();
+        } else {
+            ctx.strokeStyle = "rgb(255,150,0)"
+        }
         ctx.lineCap = 'square';
-        ctx.beginPath();
+        ctx.beginPath(); // Primary Draw
         for (var x in this.__grid)
         {
             for (var y in this.__grid[x])
             {
-                x = Number(x);
-                y = Number(y);
-                ctx.fillRect(x * size, y * size, size + 1, size + 1);
-                this.drawOutline(x, y);
+                this.__grid[x][y].draw(size);
             }
         }
         ctx.stroke();
+
+        if (this.__selectedBlock) {
+            ctx.rect(this.__selectedBlock.x * size, this.__selectedBlock.y * size, size + 1, size + 1);
+            ctx.stroke();
+        }
     },
 
-    drawOutline: function Room$drawOutline(x, y)
-    {
+    secondDraw: function Room$secondDraw() {
         var size = this.__map.size;
-        var ctx = this.__ctx;
-        var e = ctx.lineWidth / 2;
-        e = 0;
-
-        //Top Border
-        if (!this.hasBlockAt(x, y - 1)) {
-            ctx.moveTo((x) * size, (y) * size);
-            ctx.lineTo((x + 1) * size, (y) * size);
-        }
-
-        // Right Border
-        if (!this.hasBlockAt(x + 1, y))
-        {
-            ctx.moveTo((x + 1) * size, (y * size));
-            ctx.lineTo((x + 1) * size, (y + 1) * size);
-        }
-
-        //Bottom Border
-        if (!this.hasBlockAt(x, y + 1)) {
-            ctx.moveTo((x) * size, (y + 1) * size);
-            ctx.lineTo((x + 1) * size, (y + 1) * size);
-        }
-
-        // Left Border
-        if (!this.hasBlockAt(x - 1, y)) {
-            ctx.moveTo((x) * size, (y * size));
-            ctx.lineTo((x) * size, (y + 1) * size);
+        for (var x in this.__grid) {
+            for (var y in this.__grid[x]) {
+                this.__grid[x][y].drawSecondary(size);
+                this.__grid[x][y].drawDoors(size);
+            }
         }
     },
+
     //#endregion Rendering
 
-    addNewBlock: function Room$addNewBlock(x, y) {
+    selectBlock: function Room$selectBlock(x, y)
+    {
+        this.__selectedBlock = this.__grid[x][y];
+        Output.write("Selected Block (" + x + "," + y + ")");
+    },
+
+    deselectBlock: function Room$deselectBlock(x, y)
+    {
+        this.__selectedBlock = null;
+    },
+
+    addNewBlock: function Room$addNewBlock(x, y, blockType, doors) {
         this.__grid[x] = this.__grid[x] || {};
-        this.__grid[x][y] = true;
+        this.__grid[x][y] = new Block(this.__canvas, this.__ctx, this, x, y, blockType, doors);
     },
 
     removeBlock: function Room$removeBlock(x, y) {
+        if (this.__selectedBlock && this.__selectedBlock.x === x && this.__selectedBlock.y === y)
+        {
+            this.deselectBlock();
+        }
+
         delete this.__grid[x][y];
         if (Object.keys(this.__grid[x]).length === 0)
         {
@@ -96,39 +100,61 @@ Room.prototype = {
         return !!this.__grid[x][y] || false;
     },
 
+    canPlaceDoor: function Room$canPlaceDoor(direction)
+    {
+        if (!this.__selectedBlock) return false;
+        //if (this.__selectedBlock.hasDoor(direction)) return false;
+
+        var x = this.__selectedBlock.x;
+        var y = this.__selectedBlock.y;
+        switch(direction)
+        {
+            case Enums.Direction.Up:
+                return !this.hasBlockAt(x, y - 1);
+            case Enums.Direction.Down:
+                return !this.hasBlockAt(x, y + 1);
+            case Enums.Direction.Left:
+                return !this.hasBlockAt(x - 1, y);
+            case Enums.Direction.Right:
+                return !this.hasBlockAt(x + 1, y);
+        }
+    },
+
+    addDoor: function Room$addDoor(direction, doorType)
+    {
+        if (!this.canPlaceDoor(direction)) return;
+
+        this.__selectedBlock.addDoor(direction, doorType);
+    },
+
     toggleStyle: function Room$toggleStyle()
     {
-        for (var i = 0; i < roomStyles.length; i++)
-        {
-            if (this.style.name === roomStyles[i].name) break;
-        }
-
-        this.style = roomStyles[(i + 1) % roomStyles.length];
+        this.style.nextStyle();
     },
 
     //#region Serialization
 
-    serialize: function Map$serialize() {
+    serialize: function Room$serialize() {
         var json = {};
         json.grid = [];
         for (var x in this.__grid) {
             for (var y in this.__grid[x]) {
-                json.grid.push({x: x, y: y});
+                json.grid.push(this.__grid[x][y].serialize());
             }
         }
-        //json.style = this.style;
+        json.styleName = this.style.styleName;
 
-        if (json.grid.length == 0) { return null; }
+        if (json.grid.length === 0) { return null; }
         return json;
     },
 
-    deserialize: function Map$deserialize(json) {
+    deserialize: function Room$deserialize(json) {
         this.__grid = {};
         json.grid.forEach(function (block) {
-            this.addNewBlock(block.x, block.y);
+            this.addNewBlock(block.x, block.y, block.typeKey, block.doors);
         }, this);
 
-        this.style = json.style || roomStyles[0];
+        this.style = new RoomStyle(json.styleName);
     },
 
     //#endregion
