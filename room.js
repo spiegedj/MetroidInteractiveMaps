@@ -93,6 +93,11 @@ Room.prototype = {
         }
     },
 
+    getBlockAt: function Room$getBlockAt(x, y)
+    {
+        return this.__grid[x][y] || null;
+    },
+
     hasBlockAt: function Room$hasBlockAt(x, y)
     {
         if (x < 0 || y < 0) return false;
@@ -151,6 +156,10 @@ Room.prototype = {
     deserialize: function Room$deserialize(json) {
         this.__grid = {};
         json.grid.forEach(function (block) {
+
+            //block.x += 16;
+            //block.y += 10;
+
             this.addNewBlock(block.x, block.y, block.typeKey, block.doors);
         }, this);
 

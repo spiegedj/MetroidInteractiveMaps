@@ -15,6 +15,7 @@ Map.prototype = {
     boundY: 5000,
     size: 35,
     rooms: null,
+    elevators: null,
     selectedRoom: null,
     //#endregion
 
@@ -81,6 +82,14 @@ Map.prototype = {
         return null;
     },
 
+    getBlockAt: function Map$getBlockAt(position)
+    {
+        var room = this.getRoomAt(position);
+        if (!room) { return null; }
+
+        return room.getBlockAt(position.x, position.y);
+    },
+
     mouseToGrid: function Map$mouseToGrid(mousePosition, translation)
     {
         var x = Math.floor((mousePosition.x - translation.x) / this.size);
@@ -91,7 +100,28 @@ Map.prototype = {
     addNewRoom: function Map$addNewRoom(room) {
         var roomObj = new Room(this.__canvas, this.__ctx, this, room);
         this.rooms.push(roomObj);
+
+        if (this.selectedRoom) {
+            this.selectedRoom.isSelected = false;
+            this.selectedRoom.deselectBlock();
+        }
+
         this.selectedRoom = roomObj;
+    },
+
+    addElevatorPoint: function Map$addElevatorPoint(point)
+    {
+        if (this.elevators.length === 0) {
+            this.addNewElevator({});
+        }
+
+        this.elevators[this.elevators.length - 1].addPoint(point);
+    },
+
+    addNewElevator: function Map$addNewElevator(elevator)
+    {
+        var elevatorObj = new Elevator(this.__canvas, this.__ctx, this, elevator);
+        this.elevators.push(elevatorObj);
     },
 
     //#endregion Grid Functions
@@ -122,9 +152,15 @@ Map.prototype = {
             this.__ctx.stroke();
         }
 
+        // Draw Elevators
+        this.elevators.forEach(function (elevator) {
+            elevator.draw(this.size);
+        }, this);
+
+
         // Draw Rooms
         this.rooms.forEach(function (room) {
-            room.draw(false);
+            room.draw();
         }, this);
 
         this.rooms.forEach(function (room) {
@@ -146,6 +182,14 @@ Map.prototype = {
             }
         }, this);
 
+        json.elevators = [];
+        this.elevators.forEach(function (elevator) {
+            var jsonElevator = elevator.serialize();
+            if (jsonElevator) {
+                json.elevators.push(jsonElevator);
+            }
+        }, this);
+
         console.log(JSON.stringify(json));
     },
 
@@ -154,6 +198,12 @@ Map.prototype = {
         this.rooms = [];
         json.rooms.forEach(function (room) {
             this.addNewRoom(room);
+        }, this);
+
+        this.elevators = [];
+        json.elevators = json.elevators || [];
+        json.elevators.forEach(function (elevator) {
+            this.addNewElevator(elevator);
         }, this);
     },
 

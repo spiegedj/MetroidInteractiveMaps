@@ -15,6 +15,7 @@ BlockTypes = {
     Map: "Map",
     Chozo: "Chozo",
     TunnelHorizontal: "TunnelHorizontal",
+    TunnelVertical: "TunnelVertical",
     Missile: "Missile",
     EnergyTank: "EnergyTank",
     SuperMissile: "SuperMissile",
@@ -80,6 +81,11 @@ Block.prototype = {
             return;
         }
 
+        if (this.__typeKey === BlockTypes.TunnelVertical) {
+            this.drawTunnelVertical(size);
+            return;
+        }
+
         ctx.fillRect(x * size, y * size, size + 1, size + 1);
 
         //Top Border
@@ -117,16 +123,22 @@ Block.prototype = {
         var tunnelBottom = y * size + (2 * size / 3);
 
         // Right Border
-        ctx.moveTo((x + 1) * size, (y * size));
-        ctx.lineTo((x + 1) * size, tunnelTop);
-        ctx.moveTo((x + 1) * size, tunnelBottom);
-        ctx.lineTo((x + 1) * size, (y + 1) * size);
+        var block = this.__room.__map.getBlockAt({ x: x + 1, y: y });
+        if (block && (block.__typeKey !== BlockTypes.TunnelHorizontal)) {
+            ctx.moveTo((x + 1) * size, (y * size));
+            ctx.lineTo((x + 1) * size, tunnelTop);
+            ctx.moveTo((x + 1) * size, tunnelBottom);
+            ctx.lineTo((x + 1) * size, (y + 1) * size);
+        }
 
         // Left Border
-        ctx.moveTo((x) * size, (y * size));
-        ctx.lineTo((x) * size, tunnelTop);
-        ctx.moveTo((x) * size, tunnelBottom);
-        ctx.lineTo((x) * size, (y + 1) * size);
+        var block = this.__room.__map.getBlockAt({ x: x - 1, y: y });
+        if (block && (block.__typeKey !== BlockTypes.TunnelHorizontal)) {
+            ctx.moveTo((x) * size, (y * size));
+            ctx.lineTo((x) * size, tunnelTop);
+            ctx.moveTo((x) * size, tunnelBottom);
+            ctx.lineTo((x) * size, (y + 1) * size);
+        }
 
         ctx.fillRect(x * size, tunnelTop, size + 1, (size / 3) + 1);
 
@@ -139,13 +151,50 @@ Block.prototype = {
         ctx.lineTo((x + 1) * size, tunnelBottom);
     },
 
+    drawTunnelVertical: function Block$drawTunnelVertical(size) {
+        var x = this.x;
+        var y = this.y;
+        var ctx = this.__ctx;
+
+        var tunnelLeft = x * size + (size / 3);
+        var tunnelRight = x * size + (2 * size / 3);
+
+        // Bottom Border
+        var block = this.__room.__map.getBlockAt({ x: x, y: y + 1 });
+        if (block && (block.__typeKey !== BlockTypes.TunnelVertical)) {
+            ctx.moveTo((x) * size, (y + 1) * size);
+            ctx.lineTo(tunnelLeft, (y + 1) * size);
+            ctx.moveTo(tunnelRight, (y + 1) * size);
+            ctx.lineTo((x + 1) * size, (y + 1) * size);
+        }
+
+        // Top Border
+        var block = this.__room.__map.getBlockAt({ x: x, y: y - 1 });
+        if (block && (block.__typeKey !== BlockTypes.TunnelVertical)) {
+            ctx.moveTo((x) * size, (y) * size);
+            ctx.lineTo(tunnelLeft, (y) * size);
+            ctx.moveTo(tunnelRight, (y) * size);
+            ctx.lineTo((x + 1) * size, (y) * size);
+        }
+
+        ctx.fillRect(tunnelLeft, y * size - 1, (size / 3) + 1, size + 2);
+
+        // Left line
+        ctx.moveTo(tunnelLeft, y*size);
+        ctx.lineTo(tunnelLeft, (y+1) * size);
+
+        // Right line
+        ctx.moveTo(tunnelRight, y * size);
+        ctx.lineTo(tunnelRight, (y + 1) * size);
+    },
+
     //#endregion
 
     //#region Door Drawing
 
     drawDoors: function Block$drawDoors(size)
     {
-        var settings = this.saveContext(this.__ctx);
+        var settings = saveContext(this.__ctx);
         
         for (direction in this.doors)
         {
@@ -160,11 +209,11 @@ Block.prototype = {
                     this.__normalDoor(size, direction, doorColor);
                     break;
                 case DoorTypes.SuperMissile:
-                    var doorColor = "rgb(0,107,249)";
+                    var doorColor = "rgb(94,251,99)";
                     this.__normalDoor(size, direction, doorColor);
                     break;
                 case DoorTypes.PowerBomb:
-                    var doorColor = "rgb(0,107,249)";
+                    var doorColor = "rgb(246,255,0)";
                     this.__normalDoor(size, direction, doorColor);
                     break;
                 case DoorTypes.Normal:
@@ -175,7 +224,7 @@ Block.prototype = {
             }
         }
 
-        this.restoreContext(this.__ctx, settings);
+        restoreContext(this.__ctx, settings);
     },
 
     __normalDoor: function Block$__normalDoor(size, direction, doorColor)
@@ -251,27 +300,9 @@ Block.prototype = {
 
     //#region Secondary Drawing
 
-    saveContext: function Block$saveContext(ctx) 
-    {
-        return {
-            strokeStyle: ctx.strokeStyle,
-            fillStyle: ctx.fillStyle,
-            lineWidth: ctx.lineWidth,
-            font: ctx.font
-        }
-    },
-
-    restoreContext: function Block$restoreContext(ctx, orig)
-    {
-        ctx.strokeStyle = orig.strokeStyle;
-        ctx.fillStyle = orig.fillStyle;
-        ctx.lineWidth = orig.lineWidth;
-        ctx.font = orig.font;
-    },
-
     drawSecondary: function Block$drawSecondary(size)
     {
-        var original = this.saveContext(this.__ctx);
+        var settings = saveContext(this.__ctx);
 
         switch (this.__typeKey)
         {
@@ -305,17 +336,15 @@ Block.prototype = {
                 break;
         }
 
-        this.restoreContext(this.__ctx, original);
+        restoreContext(this.__ctx, settings);
     },
 
     drawSave: function Block$drawSave(size)
     {
         var ctx = this.__ctx;
 
-        ctx.beginPath();
         this.__ctx.strokeStyle = 'red';
-        this.draw(size);
-        ctx.stroke();
+        this.__ctx.strokeRect(this.x * size, this.y * size, size, size);
 
         var x = this.x * size + 8;
         var y = (this.y + 1) * size - 5;
@@ -328,10 +357,8 @@ Block.prototype = {
     drawMap: function Block$drawMap(size) {
         var ctx = this.__ctx;
 
-        ctx.beginPath();
         this.__ctx.strokeStyle = 'red';
-        this.draw(size);
-        ctx.stroke();
+        this.__ctx.strokeRect(this.x * size, this.y * size, size, size);
 
         var x = this.x * size + 2;
         var y = (this.y + 1) * size - 5;

@@ -23,6 +23,7 @@ Main.prototype = {
     __canvasClicked: false,
     __prevMousePosition: null,
     __ctlDown: false,
+    __altDown: false,
 
     map: null,
     //#endregion
@@ -71,6 +72,8 @@ Main.prototype = {
 
         if (this.__ctlDown) {
             this.map.addBlock(gridPosition, this.__blockType);
+        } if (this.__altDown) {
+            this.map.addElevatorPoint(gridPosition);
         } else {
             this.map.selectRoom(gridPosition);
         }
@@ -144,6 +147,12 @@ Main.prototype = {
             case 17: // Ctl
                 this.__ctlDown = true;
                 break;
+            case 18: // Alt
+                this.__altDown = true;
+                break;
+            case 86: // v
+                this.map.addNewElevator({});
+                break;
 
             case 37: // Left Arrow
                 this.map.addDoor(Enums.Direction.Left, this.__doorType);
@@ -160,7 +169,7 @@ Main.prototype = {
         }
 
         // Block Types
-        var keys = [49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 189, 187, 81, 87, 69, 82, 84, 89, 85, 73, 79, 80];
+        var keys = [49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 189, 187, 81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 219, 221];
         var i = 0;
         var blockType;
         for (blockType in BlockTypes)
@@ -195,6 +204,9 @@ Main.prototype = {
         switch (event.keyCode) {
             case 17:
                 this.__ctlDown = false;
+                break;
+            case 18:
+                this.__altDown = false;
                 break;
         }
     },

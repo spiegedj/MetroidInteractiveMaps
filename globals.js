@@ -29,3 +29,20 @@ Output.write = function (message)
     var outputDiv = document.getElementById("output");
     outputDiv.innerHTML = message;
 }
+
+saveContext = function (ctx) 
+{
+    return {
+        strokeStyle: ctx.strokeStyle,
+        fillStyle: ctx.fillStyle,
+        lineWidth: ctx.lineWidth,
+        font: ctx.font
+    }
+};
+
+restoreContext = function (ctx, settings) {
+    ctx.strokeStyle = settings.strokeStyle;
+    ctx.fillStyle = settings.fillStyle;
+    ctx.lineWidth = settings.lineWidth;
+    ctx.font = settings.font;
+};

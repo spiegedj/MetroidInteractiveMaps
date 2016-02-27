@@ -14,7 +14,7 @@ RoomStyle.prototype = {
         },
         Hot: {
             lineColor: 'rgb(255,253,249)',
-            roomColor: "rgb(252,0,0)"
+            roomColor: "rgb(254,105,25)"
         }
     },
     styleName: "",
