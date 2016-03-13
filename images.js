@@ -1,71 +1,80 @@
 Images = {};
 
-//#region Pickups
+Images.BuildImages = function Images$BuildImages(game, callback) {
+    for (var key in BlockTypes[game])
+    {
+        var blockType = BlockTypes[game][key];
+        BlockTypes[key] = key;
 
-Images.Missile = new Image();
-Images.Missile.src = 'images/Missile.png';
+        if (!blockType.noImage) {
+            Images[key] = new Image();
+            Images[key].src = 'images/' + game + '/' + key + '.png';
+            Images[key]._scale = blockType.scale || .035;
+        }
+    }
 
-Images.EnergyTank = new Image();
-Images.EnergyTank.src = 'images/EnergyTank.png';
+    Images[key].onload = callback;
+};
 
-Images.SuperMissile = new Image();
-Images.SuperMissile.src = 'images/SuperMissile.png';
+BlockTypes = {};
+BlockTypes.m0 = {
+    Normal: { noImage: true },
+    Save: { scale: .05 },
+    Map: { scale: .05 },
+    TunnelHorizontal: { noImage: true },
+    TunnelVertical: { noImage: true },
+    Chozo: {},
+    Missile: {},
+    EnergyTank: {},
+    SuperMissile: {},
+    PowerBomb: {},
+    Bomb: {},
+    ChargeBeam: {},
+    HiJumpBoots: {},
+    IceBeam: {},
+    LongBeam: {},
+    Morphball: {},
+    PowerGrip: {},
+    ScrewAttack: {},
+    SpeedBooster: {},
+    UnknownItem1: {},
+    UnknownItem2: {},
+    UnknownItem3: {},
+    Varia: {},
+    WaveBeam: {},
+    ZipLineActivator: {}
+};
 
-Images.PowerBomb = new Image();
-Images.PowerBomb.src = 'images/PowerBomb.png';
+BlockTypes.m3 = {
+    Normal: { noImage: true },
+    Save: { scale: .05 },
+    Map: { scale: .05 },
+    //EnergyRecharge: { scale: .05 },
+    MissileRecharge: { scale: .05 },
+    TunnelHorizontal: { noImage: true },
+    TunnelVertical: { noImage: true },
+    Missile: {},
+    EnergyTank: {},
+    SuperMissile: {},
+    PowerBomb: { scale: .04 },
+    ReserveTank: {},
 
-//#endregion
+    Bomb: {},
+    ChargeBeam: {},
+    GrapplingBeam: {},
+    GravitySuit: {},
+    HiJumpBoots: {},
+    IceBeam: {},
+    Morphball: {},
+    PlasmaBeam: {},
+    ScrewAttack: {},
+    SpaceJump: {},
+    SpringBall: {},
+    SpeedBooster: {},
+    Varia: {},
+    WaveBeam: {},
+    XRayScope: {},
 
-//#region items
-
-Images.Chozo = new Image();
-Images.Chozo.src = 'images/Chozo.png';
-
-Images.Bomb = new Image();
-Images.Bomb.src = 'images/Bomb.png';
-
-Images.ChargeBeam = new Image();
-Images.ChargeBeam.src = 'images/ChargeBeam.png';
-
-Images.HiJumpBoots = new Image();
-Images.HiJumpBoots.src = 'images/HiJumpBoots.png';
-
-Images.IceBeam = new Image();
-Images.IceBeam.src = 'images/IceBeam.png';
-
-Images.LongBeam = new Image();
-Images.LongBeam.src = 'images/LongBeam.png';
-
-Images.Morphball = new Image();
-Images.Morphball.src = 'images/Morphball.png';
-
-Images.PowerGrip = new Image();
-Images.PowerGrip.src = 'images/PowerGrip.png';
-
-Images.ScrewAttack = new Image();
-Images.ScrewAttack.src = 'images/ScrewAttack.png';
-
-Images.SpeedBooster = new Image();
-Images.SpeedBooster.src = 'images/SpeedBooster.png';
-
-Images.UnknownItem1 = new Image();
-Images.UnknownItem1.src = 'images/UnknownItem1.png';
-
-Images.UnknownItem2 = new Image();
-Images.UnknownItem2.src = 'images/UnknownItem2.png';
-
-Images.UnknownItem3 = new Image();
-Images.UnknownItem3.src = 'images/UnknownItem3.png';
-
-Images.Varia = new Image();
-Images.Varia.src = 'images/Varia.png';
-
-Images.WaveBeam = new Image();
-Images.WaveBeam.src = 'images/WaveBeam.png';
-
-Images.ZipLineActivator = new Image();
-Images.ZipLineActivator.src = 'images/ZipLineActivator.png';
-
-
-
-//#endregion
+    Missile2: {},
+    MissileSuperMissile: {},
+}

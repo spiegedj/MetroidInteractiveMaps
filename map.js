@@ -1,9 +1,17 @@
 function Map(canvas, context, json) {
     this.__canvas = canvas;
     this.__ctx = context;
-    this.deserialize(json);
 
-    this.draw();
+    this.boundX = json.boundX;
+    this.boundY = json.boundY;
+    this.banner = json.banner;
+    this.size = json.size;
+    this.game = json.name;
+
+    this.backgroundColor = json.backgroundColor || this.backgroundColor;
+    this.gridLineColor = json.gridLineColor || this.gridLineColor;
+
+    this.deserialize(json.map);
 }
 
 Map.prototype = {
@@ -11,12 +19,17 @@ Map.prototype = {
     __canvas: null,
     __ctx: null,
 
-    boundX: 5000,
-    boundY: 5000,
-    size: 35,
     rooms: null,
     elevators: null,
     selectedRoom: null,
+
+    banner: null,
+    boundX: 5000,
+    boundY: 5000,
+    size: 35,
+    area: null,
+    backgroundColor: 'rgb(32,40,32)',
+    gridLineColor: 'rgb(7,89,15)',
     //#endregion
 
     //#region Grid Functions
@@ -67,7 +80,7 @@ Map.prototype = {
     {
         if (!this.selectedRoom) return;
 
-        this.selectedRoom.toggleStyle();
+        return this.selectedRoom.toggleStyle();
     },
 
     getRoomAt: function Map$getRoomAt(position)
@@ -129,28 +142,33 @@ Map.prototype = {
     //#region Rendering
     draw: function Map$draw()
     {
+        var pixelBoundX = this.boundX * this.size;
+        var pixelBoundY = this.boundY * this.size;
+
         // Background color
-        this.__ctx.fillStyle = 'rgb(32,40,32)';
-        this.__ctx.fillRect(0, 0, this.boundX, this.boundY);
+        this.__ctx.fillStyle = this.backgroundColor;
+        this.__ctx.fillRect(0, 0, pixelBoundX, pixelBoundY);
 
         // Draw Grid
         this.__ctx.lineWidth = 2;
-        this.__ctx.strokeStyle = 'rgb(7,89,15)';
-        for (var x = 0; x < this.boundX; x += this.size)
+        //this.__ctx.setLineDash([7]);
+        this.__ctx.strokeStyle = this.gridLineColor;
+        for (var x = 0; x < pixelBoundX; x += this.size)
         {
             this.__ctx.beginPath();
             this.__ctx.moveTo(x, 0);
-            this.__ctx.lineTo(x, this.boundY);
+            this.__ctx.lineTo(x, pixelBoundY);
             this.__ctx.stroke();
-
         }
 
-        for (var y = 0; y < this.boundY; y += this.size) {
+        for (var y = 0; y < pixelBoundY; y += this.size) {
             this.__ctx.beginPath();
             this.__ctx.moveTo(0, y);
-            this.__ctx.lineTo(this.boundX, y);
+            this.__ctx.lineTo(pixelBoundX, y);
             this.__ctx.stroke();
         }
+        this.__ctx.setLineDash([]);
+
 
         // Draw Elevators
         this.elevators.forEach(function (elevator) {
@@ -166,6 +184,22 @@ Map.prototype = {
         this.rooms.forEach(function (room) {
             room.secondDraw();
         }, this);
+
+        // Banner
+        this.drawBanner();
+    },
+
+    drawBanner: function Map$drawBanner()
+    {
+        if (this.banner) 
+        {
+            var x = this.banner.x * this.size;
+            var y = this.banner.y * this.size;
+
+            var aspect = this.banner.image.height / this.banner.image.width;
+            var scale = this.size * this.banner.scale;
+            this.__ctx.drawImage(this.banner.image, x, y, scale, scale * aspect);
+        }
     },
     //#endregion Rendering
 
@@ -190,7 +224,7 @@ Map.prototype = {
             }
         }, this);
 
-        console.log(JSON.stringify(json));
+        console.log("map: " + JSON.stringify(json));
     },
 
     deserialize: function Map$deserialize(json)
@@ -205,6 +239,9 @@ Map.prototype = {
         json.elevators.forEach(function (elevator) {
             this.addNewElevator(elevator);
         }, this);
+
+        //var conversions = new Conversions(this);
+        //conversions.addAreas();
     },
 
     //#endregion

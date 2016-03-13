@@ -4,7 +4,6 @@ function Elevator(canvas, context, map, properties) {
     this.__map = map;
 
     this.deserialize(properties);
-    this.draw();
 }
 
 Elevator.prototype = {
@@ -20,8 +19,8 @@ Elevator.prototype = {
     draw: function Elevator$draw(size) {
         var settings = saveContext(this.__ctx);
 
-        this.__ctx.strokeStyle = 'white';
-        this.__ctx.lineWidth = 5;
+        this.__ctx.strokeStyle = 'rgb(0,255,7)';
+        this.__ctx.lineWidth = 7;
         this.__ctx.beginPath();
         if (this.points.length > 1)
         {

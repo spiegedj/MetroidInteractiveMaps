@@ -5,8 +5,6 @@ function Room(canvas, context, map, properties) {
     this.id = guid();
 
     this.deserialize(properties);
-
-    this.draw();
 }
 
 Room.prototype = {
@@ -17,6 +15,7 @@ Room.prototype = {
     __grid: null,
     __selectedBlock: null,
 
+    area: null,
     isSelected: false,
     id: null,
     style: null,
@@ -28,7 +27,7 @@ Room.prototype = {
         var ctx = this.__ctx;
 
         ctx.fillStyle = this.style.getRoomColor();
-        ctx.lineWidth = 4;
+        ctx.lineWidth = .1 * size;
 
         if (!this.isSelected) {
             ctx.strokeStyle = this.style.getLineColor();
@@ -44,7 +43,7 @@ Room.prototype = {
                 this.__grid[x][y].draw(size);
             }
         }
-        ctx.stroke();
+       ctx.stroke();
 
         if (this.__selectedBlock) {
             ctx.rect(this.__selectedBlock.x * size, this.__selectedBlock.y * size, size + 1, size + 1);
@@ -64,10 +63,21 @@ Room.prototype = {
 
     //#endregion Rendering
 
+    getPositions: function Room$getPositions()
+    {
+        var blocks = [];
+        for (var x in this.__grid) {
+            for (var y in this.__grid[x]) {
+                blocks.push({x: Number(x), y: Number(y)});
+            }
+        }
+        return blocks;
+    },
+
     selectBlock: function Room$selectBlock(x, y)
     {
         this.__selectedBlock = this.__grid[x][y];
-        Output.write("Selected Block (" + x + "," + y + ")");
+        Output.write("Selected Block (" + x + "," + y + ") " + this.area);
     },
 
     deselectBlock: function Room$deselectBlock(x, y)
@@ -135,6 +145,8 @@ Room.prototype = {
     toggleStyle: function Room$toggleStyle()
     {
         this.style.nextStyle();
+
+        return this.style.styleName;
     },
 
     //#region Serialization
@@ -148,6 +160,7 @@ Room.prototype = {
             }
         }
         json.styleName = this.style.styleName;
+        json.area = this.area;
 
         if (json.grid.length === 0) { return null; }
         return json;
@@ -163,7 +176,8 @@ Room.prototype = {
             this.addNewBlock(block.x, block.y, block.typeKey, block.doors);
         }, this);
 
-        this.style = new RoomStyle(json.styleName);
+        this.style = new RoomStyle(json.styleName, this.__map.game);
+        this.area = json.area;
     },
 
     //#endregion

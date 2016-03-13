@@ -12,9 +12,37 @@ html, body {
 #canvas {
 }
 
-#output {
+#header-outer {
     position: absolute;
     top: 0;
+    right: 0;
+    width: 100%;
+    height: 60px;
+}
+
+#header-inner {
+    margin: 0 auto;
+    width: 1200px;
+    height: 100%;
+    background-color: black;
+    border: 1px solid red;
+}
+
+#header-block {
+    text-align: center;
+    width: 300px;
+    height: 100%;
+    float: left;
+}
+
+#header-block a {
+    position: relative;
+    top: 15px;
+}
+
+#output {
+    position: absolute;
+    bottom: 0;
     right: 0;
     width: 700px;
     height: 30px;

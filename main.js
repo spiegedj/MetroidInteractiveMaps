@@ -2,47 +2,69 @@ function Main() {
     this.__translation = { x: 0, y: 0 };
     this.__scale = { x: 1, y: 1 };
 
+    this.game = getQueryVariable('g') || 'm0';
+    var json = games[this.game];
+
     this.initCanvas();
+    this.initHiddenCanvas();
     this.initEvents();
 
-    var json = mzm;
     this.map = new Map(this.__canvas, this.__ctx, json);
+    this.resizeHiddenCanvas();
 
-    Output.write("Finished Loading!");
+    Images.BuildImages(this.game, $$fcd(this, this.draw));
+
+    this.hiddenCanvasOffset = { x: 0, y: 0 };
 }
 
 Main.prototype = {
     //#region Fields
     __canvas: null,
+    __hiddenCanvas: null,
     __ctx: null,
     __translation: null,
     __scale: null,
-    __blockType: BlockTypes.Normal,
+    __blockType: "Normal",
     __doorType: DoorTypes.Normal,
 
     __canvasClicked: false,
     __prevMousePosition: null,
     __ctlDown: false,
     __altDown: false,
+    __currentStyle: null,
 
+    pixelBounds: null,
+    hiddenCanvasOffset: null,
     map: null,
+    game: null,
     //#endregion
 
     //#region Transformations
 
     translate: function Main$translate(x, y)
     {
-        x = this.__translation.x + x;
-        y = this.__translation.y + y;
-        x = Math.min(0, x);
-        y = Math.min(0, y);
+        x = Math.min(this.__translation.x + x, 0);
+        y = Math.min(this.__translation.y + y, 0);
 
-        x = Math.max(-(this.map.boundX - this.__canvas.width), x);
-        y = Math.max(-(this.map.boundY - this.__canvas.height), y);
+        x = Math.max(-(this.pixelBounds.x - this.__canvas.width), x);
+        y = Math.max(-(this.pixelBounds.y - this.__canvas.height), y);
 
         this.__translation = { x: x, y: y };
 
-        this.draw();
+        // Check if we need to redraw
+        if (x > this.hiddenCanvasOffset.x ||
+            y > this.hiddenCanvasOffset.y ||
+            x - this.__canvas.width < this.hiddenCanvasOffset.x - this.__hiddenCanvas.width ||
+            y - this.__canvas.height < this.hiddenCanvasOffset.y - this.__hiddenCanvas.height
+            ) {
+            this.resizeHiddenCanvas();
+            this.draw();
+            console.log("Redrawn!");
+
+
+        } else {
+            this.drawMainCanvas();
+        }
     },
 
     //#endregion
@@ -54,14 +76,12 @@ Main.prototype = {
         window.addEventListener("resize", $$fcd(this, this.__onResize));
         window.addEventListener("keydown", $$fcd(this, this.__onKeyDown));
         window.addEventListener("keyup", $$fcd(this, this.__onKeyUp));
-
+        window.addEventListener("mouseup", $$fcd(this, this.__onMouseUp));
 
         this.__canvas.addEventListener("click", $$fcd(this, this.__onClick));
         this.__canvas.addEventListener("contextmenu", $$fcd(this, this.__onRightClick));
         this.__canvas.addEventListener("mousedown", $$fcd(this, this.__onMouseDown));
-        window.addEventListener("mouseup", $$fcd(this, this.__onMouseUp));
         this.__canvas.addEventListener("mousemove", $$fcd(this, this.__onMouseMove));
-
         this.__canvas.addEventListener("mousewheel", $$fcd(this, this.__onWheel));
     },
 
@@ -110,6 +130,7 @@ Main.prototype = {
             var curMousePosition = this.getMousePosition(event);
             var dx = curMousePosition.x - this.__prevMousePosition.x;
             var dy = curMousePosition.y - this.__prevMousePosition.y;
+
             this.translate(dx, dy);
 
             this.__prevMousePosition = curMousePosition;
@@ -124,25 +145,45 @@ Main.prototype = {
 
     __onWheel: function Main$__onWheel(event)
     {
-        var delta = (event.deltaY > 0) ? 0.1 : -0.1;
+        var maxSizeX = (this.__canvas.width / this.map.boundX);
+        var maxSizeY = (this.__canvas.height / this.map.boundY);
+        var maxSize = Math.max(maxSizeX, maxSizeY);
 
-        var x = this.__scale.x + delta;
-        var y = this.__scale.y + delta;
-        this.__scale = { x: x, y: y };
+
+        var delta = (event.deltaY > 0) ? 10 : -10;
+        if (this.map.size + delta < maxSize) return;
+
+        var previousSize = this.map.size;
+        var p = 1 / (this.map.size / (this.map.size + delta));
+        this.map.size += delta;
+
+        this.resizeHiddenCanvas();
+
+        var translationCenter = this.getTranslationCenter();
+
+        var newTranslationCenterX = (translationCenter.x / previousSize) * this.map.size;
+        var newTranslationCenterY = (translationCenter.y / previousSize) * this.map.size;
+
+        var tx = newTranslationCenterX + (this.__canvas.width / 2);
+        var ty = newTranslationCenterY + (this.__canvas.height / 2);
+
         this.draw();
+        this.translate(tx - this.__translation.x, ty - this.__translation.y);
     },
 
     __onKeyDown: function Main$__onKeyDown(event)
     {
         switch (event.keyCode) {
             case 78: // N
-                this.map.addNewRoom({ grid: [] });
+                this.map.addNewRoom({ grid: [], styleName: this.__currentStyle });
+                this.draw();
                 break;
             case 83: // S
                 this.map.serialize();
                 break;
             case 90: // Z
-                this.map.toggleStyle();
+                this.__currentStyle = this.map.toggleStyle();
+                this.draw();
                 break;
             case 17: // Ctl
                 this.__ctlDown = true;
@@ -152,31 +193,36 @@ Main.prototype = {
                 break;
             case 86: // v
                 this.map.addNewElevator({});
+                this.draw();
                 break;
 
             case 37: // Left Arrow
                 this.map.addDoor(Enums.Direction.Left, this.__doorType);
+                this.draw();
                 break;
             case 39: // Right Arrow
                 this.map.addDoor(Enums.Direction.Right, this.__doorType);
+                this.draw();
                 break;
             case 38: // Up Arrow
                 this.map.addDoor(Enums.Direction.Up, this.__doorType);
+                this.draw();
                 break;
             case 40: // Down Arrow
                 this.map.addDoor(Enums.Direction.Down, this.__doorType);
+                this.draw();
                 break;
         }
 
-        // Block Types
-        var keys = [49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 189, 187, 81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 219, 221];
+        // Images
+        var keys = [49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 189, 187, 81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 219, 221, 65, 83, 68, 70, 71, 72, 75];
         var i = 0;
         var blockType;
-        for (blockType in BlockTypes)
+        for (blockType in BlockTypes[this.game])
         {
             if (event.keyCode === keys[i])
             {
-                this.__blockType = BlockTypes[blockType];
+                this.__blockType = blockType;
                 Output.write("Block Type Switched: " + this.__blockType);
                 break;
             }
@@ -195,9 +241,6 @@ Main.prototype = {
             }
             i++;
         }
-
-
-        this.draw();
     },
 
     __onKeyUp: function Main$__onKeyUp(event) {
@@ -219,10 +262,41 @@ Main.prototype = {
     {
         if (!this.__canvas) {
             this.__canvas = document.getElementById("canvas");
-            this.__ctx = this.__canvas.getContext("2d");
         }
 
         this.resizeCanvas();
+    },
+
+    initHiddenCanvas: function Main$initHiddenCanvas() 
+    {
+        this.__hiddenCanvas = document.getElementById("hiddenCanvas");
+        this.__ctx = this.__hiddenCanvas.getContext("2d");
+        this.__ctx.imageSmoothingEnabled = false;
+    },
+
+    resizeHiddenCanvas: function Main$resizeHiddenCanvas()
+    {
+        var hCanvasMax = 4000;
+
+        this.pixelBounds = {
+            x: this.map.boundX * this.map.size,
+            y: this.map.boundY * this.map.size
+        }
+
+        if (this.pixelBounds.x > 3000 || this.pixelBounds.y > 3000) {
+            this.__hiddenCanvas.width = hCanvasMax;
+            this.__hiddenCanvas.height = hCanvasMax;
+
+            var translationCenter = this.getTranslationCenter();
+            this.hiddenCanvasOffset = {
+                x: Math.min(translationCenter.x + (hCanvasMax / 2), 0),
+                y: Math.min(translationCenter.y + (hCanvasMax / 2), 0)
+            };
+        } else {
+            this.hiddenCanvasOffset = { x: 0, y: 0 };
+            this.__hiddenCanvas.width = this.pixelBounds.x;
+            this.__hiddenCanvas.height = this.pixelBounds.y;
+        }
     },
 
     resizeCanvas: function Main$resizeCanvas()
@@ -240,16 +314,34 @@ Main.prototype = {
         };
     },
 
+    getTranslationCenter: function Main$getTranslationCenter()
+    {
+        var x = this.__translation.x - (this.__canvas.width / 2);
+        var y = this.__translation.y - (this.__canvas.height / 2);
+        return { x: x, y: y };
+    },
+
     //#endregion
 
     draw: function Main$draw()
     {
+        console.log("ASDF");
+
         this.__ctx.setTransform(1, 0, 0, 1, 0, 0);
-        //this.__ctx.clearRect(0, 0, this.__canvas.width, this.__canvas.height);
-        this.__ctx.scale(this.__scale.x, this.__scale.y);
-
-        this.__ctx.translate(this.__translation.x, this.__translation.y);
-
+        this.__ctx.imageSmoothingEnabled = false;
+        this.__ctx.translate(this.hiddenCanvasOffset.x, this.hiddenCanvasOffset.y);
         this.map.draw();
-    }
+
+        this.drawMainCanvas();
+    },
+
+    drawMainCanvas: function Main$drawMainCanvas()
+    {
+        var mainCanvasTranslation = {
+            x: this.__translation.x - this.hiddenCanvasOffset.x,
+            y: this.__translation.y - this.hiddenCanvasOffset.y
+        }
+
+        this.__canvas.getContext('2d').drawImage(this.__hiddenCanvas, mainCanvasTranslation.x, mainCanvasTranslation.y);
+    },
 };
