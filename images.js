@@ -10,19 +10,33 @@ Images.BuildImages = function Images$BuildImages(game, callback) {
             Images[key] = new Image();
             Images[key].src = 'images/' + game + '/' + key + '.png';
             Images[key]._scale = blockType.scale || .035;
+            Images[key]._outlined = blockType.outlined;
         }
     }
 
     Images[key].onload = callback;
 };
 
+ItemDetails =
+{
+    Missile: {
+        name: "Missile Expansion"
+    },
+    EnergyTank: {
+        name: "Energy Tank"
+    },
+    SuperMissile: {
+        name: "Super Missile Expansion"
+    },
+};
+
 BlockTypes = {};
 BlockTypes.m0 = {
     Normal: { noImage: true },
-    Save: { scale: .05 },
-    Map: { scale: .05 },
-    TunnelHorizontal: { noImage: true },
-    TunnelVertical: { noImage: true },
+    Save: { scale: .05, outlined: true },
+    Map: { scale: .05, outlined: true },
+    TunnelHorizontal: { noImage: true, outlined: true },
+    TunnelVertical: { noImage: true, outlined: true },
     Chozo: {},
     Missile: {},
     EnergyTank: {},
@@ -47,10 +61,11 @@ BlockTypes.m0 = {
 
 BlockTypes.m3 = {
     Normal: { noImage: true },
-    Save: { scale: .05 },
-    Map: { scale: .05 },
-    //EnergyRecharge: { scale: .05 },
-    MissileRecharge: { scale: .05 },
+    Save: { scale: .05, outlined: true },
+    Map: { scale: .05, outlined: true },
+    EnergyRecharge: { scale: .05, outlined: true },
+    MissileRecharge: { scale: .05, outlined: true },
+    Recharge: { scale: .04, outlined: true },
     TunnelHorizontal: { noImage: true },
     TunnelVertical: { noImage: true },
     Missile: {},
@@ -69,6 +84,7 @@ BlockTypes.m3 = {
     PlasmaBeam: {},
     ScrewAttack: {},
     SpaceJump: {},
+    Spazer: {},
     SpringBall: {},
     SpeedBooster: {},
     Varia: {},

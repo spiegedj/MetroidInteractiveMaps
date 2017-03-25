@@ -52,6 +52,11 @@ RoomStyle.Styles = {
             lineColor: 'rgb(255,253,249)',
             roomColor: "rgb(145,45,45)",
         },
+
+        Elevator: {
+            lineColor: 'rgb(255,253,249)',
+            roomColor: "rgb(0,0,0)",
+        }
     }
 }
 

@@ -6,7 +6,7 @@ function Block(canvas, context, room, x, y, blockType, doors) {
     this.y = Number(y);
     this.doors = doors || {};
 
-    this.__typeKey = blockType || BlockTypes.Normal;
+    this.blockType = blockType || BlockTypes.Normal;
 }
 
 DoorTypes = {
@@ -20,7 +20,7 @@ DoorTypes = {
 Block.prototype = {
     __canvas: null,
     __ctx: null,
-    __typeKey: "",
+    blockType: "",
 
     doors: null,
     x: 0,
@@ -47,13 +47,13 @@ Block.prototype = {
         var ctx = this.__ctx;
         
 
-        if (this.__typeKey === BlockTypes.TunnelHorizontal)
+        if (this.blockType === BlockTypes.TunnelHorizontal)
         {
             this.drawTunnelHorizontal(size);
             return;
         }
 
-        if (this.__typeKey === BlockTypes.TunnelVertical) {
+        if (this.blockType === BlockTypes.TunnelVertical) {
             this.drawTunnelVertical(size);
             return;
         }
@@ -96,7 +96,7 @@ Block.prototype = {
 
         // Right Border
         var block = this.__room.__map.getBlockAt({ x: x + 1, y: y });
-        if (block && (block.__typeKey !== BlockTypes.TunnelHorizontal)) {
+        if (block && (block.blockType !== BlockTypes.TunnelHorizontal)) {
             ctx.moveTo((x + 1) * size, (y * size));
             ctx.lineTo((x + 1) * size, tunnelTop);
             ctx.moveTo((x + 1) * size, tunnelBottom);
@@ -105,7 +105,7 @@ Block.prototype = {
 
         // Left Border
         var block = this.__room.__map.getBlockAt({ x: x - 1, y: y });
-        if (block && (block.__typeKey !== BlockTypes.TunnelHorizontal)) {
+        if (block && (block.blockType !== BlockTypes.TunnelHorizontal)) {
             ctx.moveTo((x) * size, (y * size));
             ctx.lineTo((x) * size, tunnelTop);
             ctx.moveTo((x) * size, tunnelBottom);
@@ -133,7 +133,7 @@ Block.prototype = {
 
         // Bottom Border
         var block = this.__room.__map.getBlockAt({ x: x, y: y + 1 });
-        if (block && (block.__typeKey !== BlockTypes.TunnelVertical)) {
+        if (block && (block.blockType !== BlockTypes.TunnelVertical)) {
             ctx.moveTo((x) * size, (y + 1) * size);
             ctx.lineTo(tunnelLeft, (y + 1) * size);
             ctx.moveTo(tunnelRight, (y + 1) * size);
@@ -142,7 +142,7 @@ Block.prototype = {
 
         // Top Border
         var block = this.__room.__map.getBlockAt({ x: x, y: y - 1 });
-        if (block && (block.__typeKey !== BlockTypes.TunnelVertical)) {
+        if (block && (block.blockType !== BlockTypes.TunnelVertical)) {
             ctx.moveTo((x) * size, (y) * size);
             ctx.lineTo(tunnelLeft, (y) * size);
             ctx.moveTo(tunnelRight, (y) * size);
@@ -249,7 +249,7 @@ Block.prototype = {
         var ctx = this.__ctx;
         var x = this.x;
         var y = this.y;
-        var len = ctx.lineWidth + .4;
+        var len = ctx.lineWidth + 2;
 
         ctx.fillStyle = this.__room.style.getRoomColor();
         if (direction === Enums.Direction.Up) {
@@ -277,25 +277,19 @@ Block.prototype = {
     {
         var settings = saveContext(this.__ctx);
 
-        switch (this.__typeKey) {
-            case BlockTypes.Save:
-                this.drawSave(size);
-                break;
-            case BlockTypes.Map:
-                this.drawMap(size);
-                break;
-        }
+        var image = Images[this.blockType];
 
-        var image = Images[this.__typeKey];
-        if (image)
-        {
+        if (image) {
+            if (image._outlined) {
+                this.drawOutline(size);
+            }
+
             this.drawItem(size, image, size * image._scale);
         }
-
         restoreContext(this.__ctx, settings);
     },
 
-    drawSave: function Block$drawSave(size)
+    drawOutline: function Block$drawOutline(size)
     {
         var ctx = this.__ctx;
 
@@ -304,23 +298,32 @@ Block.prototype = {
 
         var x = this.x * size + 8;
         var y = (this.y + 1) * size - 5;
-
-        //this.__ctx.fillStyle = 'rgb(204,207,97)';
-        //this.__ctx.font = 'bold ' + (size) + 'pt Tw Cen MT';
-        //this.__ctx.fillText('S', x, y);
     },
 
-    drawMap: function Block$drawMap(size) {
-        var ctx = this.__ctx;
+    //drawSave: function Block$drawSave(size)
+    //{
+    //    var ctx = this.__ctx;
 
-        this.__ctx.strokeStyle = 'red';
-        this.__ctx.strokeRect(this.x * size, this.y * size, size, size);
+    //    this.__ctx.strokeStyle = 'red';
+    //    this.__ctx.strokeRect(this.x * size, this.y * size, size, size);
 
-        var x = this.x * size + 2;
-        var y = (this.y + 1) * size - 5;
+    //    var x = this.x * size + 8;
+    //    var y = (this.y + 1) * size - 5;
 
+    //    //this.__ctx.fillStyle = 'rgb(204,207,97)';
+    //    //this.__ctx.font = 'bold ' + (size) + 'pt Tw Cen MT';
+    //    //this.__ctx.fillText('S', x, y);
+    //},
 
-    },
+    //drawMap: function Block$drawMap(size) {
+    //    var ctx = this.__ctx;
+
+    //    this.__ctx.strokeStyle = 'red';
+    //    this.__ctx.strokeRect(this.x * size, this.y * size, size, size);
+
+    //    var x = this.x * size + 2;
+    //    var y = (this.y + 1) * size - 5;
+    //},
 
     drawItem: function Block$drawItem(size, item, scale)
     {
@@ -346,7 +349,7 @@ Block.prototype = {
             x: this.x,
             y: this.y,
             doors: Object.keys(this.doors).length > 0 ? this.doors : undefined,
-            typeKey: this.__typeKey
+            typeKey: this.blockType
         };
     },
 

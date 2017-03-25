@@ -78,6 +78,8 @@ Room.prototype = {
     {
         this.__selectedBlock = this.__grid[x][y];
         Output.write("Selected Block (" + x + "," + y + ") " + this.area);
+
+        return this.__selectedBlock;
     },
 
     deselectBlock: function Room$deselectBlock(x, y)
@@ -170,7 +172,7 @@ Room.prototype = {
         this.__grid = {};
         json.grid.forEach(function (block) {
 
-            //block.x += 16;
+            //block.x += 50;
             //block.y += 10;
 
             this.addNewBlock(block.x, block.y, block.typeKey, block.doors);

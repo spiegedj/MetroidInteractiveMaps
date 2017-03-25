@@ -62,7 +62,9 @@ Map.prototype = {
             }
             this.selectedRoom = this.getRoomAt(position);
             this.selectedRoom.isSelected = true;
-            this.selectedRoom.selectBlock(position.x, position.y);
+            var selectedBlock = this.selectedRoom.selectBlock(position.x, position.y);
+
+            return selectedBlock.blockType;
         }
     },
 

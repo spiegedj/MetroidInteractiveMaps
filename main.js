@@ -13,8 +13,11 @@ function Main() {
     this.resizeHiddenCanvas();
 
     Images.BuildImages(this.game, $$fcd(this, this.draw));
+    this.detailsPanel = new DetailsPanel(canvas, this.__mainCtx);
 
     this.hiddenCanvasOffset = { x: 0, y: 0 };
+    this.centerCanvas();
+
 }
 
 Main.prototype = {
@@ -22,6 +25,7 @@ Main.prototype = {
     __canvas: null,
     __hiddenCanvas: null,
     __ctx: null,
+    __mainCtx: null,
     __translation: null,
     __scale: null,
     __blockType: "Normal",
@@ -33,10 +37,10 @@ Main.prototype = {
     __altDown: false,
     __currentStyle: null,
 
-    pixelBounds: null,
     hiddenCanvasOffset: null,
     map: null,
     game: null,
+    detailsPanel: null,
     //#endregion
 
     //#region Transformations
@@ -46,8 +50,9 @@ Main.prototype = {
         x = Math.min(this.__translation.x + x, 0);
         y = Math.min(this.__translation.y + y, 0);
 
-        x = Math.max(-(this.pixelBounds.x - this.__canvas.width), x);
-        y = Math.max(-(this.pixelBounds.y - this.__canvas.height), y);
+        var pixelBounds = this.getPixelBounds();
+        x = Math.max(-(pixelBounds.x - this.__canvas.width), x);
+        y = Math.max(-(pixelBounds.y - this.__canvas.height), y);
 
         this.__translation = { x: x, y: y };
 
@@ -65,6 +70,20 @@ Main.prototype = {
         } else {
             this.drawMainCanvas();
         }
+    },
+
+    translateTo: function Main$translateTo(tx, ty)
+    {
+        this.translate(tx - this.__translation.x, ty - this.__translation.y);
+    },
+
+    centerCanvas: function Main$centerCanvas()
+    {
+        var bounds = this.getPixelBounds();
+        var tx = (bounds.x / 2) - (this.__canvas.width / 2);
+        var ty = (bounds.y / 2) - (this.__canvas.height / 2);
+
+        this.translateTo(-tx, 0);
     },
 
     //#endregion
@@ -95,7 +114,8 @@ Main.prototype = {
         } if (this.__altDown) {
             this.map.addElevatorPoint(gridPosition);
         } else {
-            this.map.selectRoom(gridPosition);
+            var blockType = this.map.selectRoom(gridPosition);
+            this.detailsPanel.setSelected(blockType);
         }
 
         this.draw();
@@ -159,6 +179,9 @@ Main.prototype = {
 
         this.resizeHiddenCanvas();
 
+        //var translationCenter = this.getMousePosition(event);
+        //translationCenter.x = (-translationCenter.x) + this.__translation.x;
+        //translationCenter.y = (-translationCenter.y) + this.__translation.y;
         var translationCenter = this.getTranslationCenter();
 
         var newTranslationCenterX = (translationCenter.x / previousSize) * this.map.size;
@@ -168,7 +191,7 @@ Main.prototype = {
         var ty = newTranslationCenterY + (this.__canvas.height / 2);
 
         this.draw();
-        this.translate(tx - this.__translation.x, ty - this.__translation.y);
+        this.translateTo(tx, ty);
     },
 
     __onKeyDown: function Main$__onKeyDown(event)
@@ -264,6 +287,7 @@ Main.prototype = {
             this.__canvas = document.getElementById("canvas");
         }
 
+        this.__mainCtx = this.__canvas.getContext("2d");
         this.resizeCanvas();
     },
 
@@ -277,13 +301,9 @@ Main.prototype = {
     resizeHiddenCanvas: function Main$resizeHiddenCanvas()
     {
         var hCanvasMax = 4000;
+        var pixelBounds = this.getPixelBounds();
 
-        this.pixelBounds = {
-            x: this.map.boundX * this.map.size,
-            y: this.map.boundY * this.map.size
-        }
-
-        if (this.pixelBounds.x > 3000 || this.pixelBounds.y > 3000) {
+        if (pixelBounds.x > 3000 || pixelBounds.y > 3000) {
             this.__hiddenCanvas.width = hCanvasMax;
             this.__hiddenCanvas.height = hCanvasMax;
 
@@ -294,8 +314,8 @@ Main.prototype = {
             };
         } else {
             this.hiddenCanvasOffset = { x: 0, y: 0 };
-            this.__hiddenCanvas.width = this.pixelBounds.x;
-            this.__hiddenCanvas.height = this.pixelBounds.y;
+            this.__hiddenCanvas.width = pixelBounds.x;
+            this.__hiddenCanvas.height = pixelBounds.y;
         }
     },
 
@@ -321,12 +341,18 @@ Main.prototype = {
         return { x: x, y: y };
     },
 
+    getPixelBounds: function Main$getPixelBounds()
+    {
+        return {
+            x: this.map.boundX * this.map.size,
+            y: this.map.boundY * this.map.size
+        }
+    },
+
     //#endregion
 
     draw: function Main$draw()
     {
-        console.log("ASDF");
-
         this.__ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.__ctx.imageSmoothingEnabled = false;
         this.__ctx.translate(this.hiddenCanvasOffset.x, this.hiddenCanvasOffset.y);
@@ -342,6 +368,8 @@ Main.prototype = {
             y: this.__translation.y - this.hiddenCanvasOffset.y
         }
 
-        this.__canvas.getContext('2d').drawImage(this.__hiddenCanvas, mainCanvasTranslation.x, mainCanvasTranslation.y);
+        this.__mainCtx.drawImage(this.__hiddenCanvas, mainCanvasTranslation.x, mainCanvasTranslation.y);
+
+        this.detailsPanel.draw();
     },
 };
