@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "es2015",
+    "module": "commonjs",
+    "watch": true
+  },
+  "exclude": [
+    "node_modules"
+  ],
+  "compileOnSave": true,
+  "files": [
+    "Block.ts",
+    "Canvas.ts",
+    "Conversions.ts",
+    "DetailsPanel.ts",
+    "Elevator.ts",
+    "Globals.ts",
+    "Images.ts",
+    "Main.ts",
+    "MMap.ts",
+    "Room.ts",
+    "RoomStyle.ts"
+  ]
+}

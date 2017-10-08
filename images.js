@@ -1,11 +1,8 @@
-Images = {};
-
+var Images = {};
 Images.BuildImages = function Images$BuildImages(game, callback) {
-    for (var key in BlockTypes[game])
-    {
+    for (var key in BlockTypes[game]) {
         var blockType = BlockTypes[game][key];
         BlockTypes[key] = key;
-
         if (!blockType.noImage) {
             Images[key] = new Image();
             Images[key].src = 'images/' + game + '/' + key + '.png';
@@ -13,24 +10,32 @@ Images.BuildImages = function Images$BuildImages(game, callback) {
             Images[key]._outlined = blockType.outlined;
         }
     }
-
+    for (var areaName in Areas[game]) {
+        Areas[game][areaName] = new Image();
+        Areas[game][areaName].src = 'images/' + game + '/' + areaName + '.png';
+    }
     Images[key].onload = callback;
 };
-
-ItemDetails =
-{
-    Missile: {
-        name: "Missile Expansion"
+var Areas = {
+    m0: {
+        Crateria: {},
+        Brinstar: {},
+        Chozodia: {},
+        Tourian: {},
+        Ridley: {},
+        Kraid: {},
+        Norfair: {},
     },
-    EnergyTank: {
-        name: "Energy Tank"
-    },
-    SuperMissile: {
-        name: "Super Missile Expansion"
+    m3: {
+        Crateria: {},
+        Brinstar: {},
+        "Wrecked Ship": {},
+        Tourian: {},
+        Maridia: {},
+        Norfair: {},
     },
 };
-
-BlockTypes = {};
+var BlockTypes = {};
 BlockTypes.m0 = {
     Normal: { noImage: true },
     Save: { scale: .05, outlined: true },
@@ -58,7 +63,6 @@ BlockTypes.m0 = {
     WaveBeam: {},
     ZipLineActivator: {}
 };
-
 BlockTypes.m3 = {
     Normal: { noImage: true },
     Save: { scale: .05, outlined: true },
@@ -73,7 +77,6 @@ BlockTypes.m3 = {
     SuperMissile: {},
     PowerBomb: { scale: .04 },
     ReserveTank: {},
-
     Bomb: {},
     ChargeBeam: {},
     GrapplingBeam: {},
@@ -90,7 +93,17 @@ BlockTypes.m3 = {
     Varia: {},
     WaveBeam: {},
     XRayScope: {},
-
     Missile2: {},
     MissileSuperMissile: {},
-}
+};
+var ItemDetails = {
+    Missile: {
+        name: "Missile Expansion"
+    },
+    EnergyTank: {
+        name: "Energy Tank"
+    },
+    SuperMissile: {
+        name: "Super Missile Expansion"
+    },
+};
