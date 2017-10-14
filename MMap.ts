@@ -98,6 +98,13 @@ class MMap {
         return this.selectedRoom.toggleStyle();
     }
 
+    public toggleArea(): string
+    {
+        if (!this.selectedRoom) return;
+
+        return this.selectedRoom.toggleArea();
+    }
+
     public getRoomAt(position: Point): Room
     {
         for (var i = 0; i < this.rooms.length; i++)
@@ -169,6 +176,15 @@ class MMap {
             }
         }, this);
         return point;
+    }
+
+    public translateArea(area: string, left: number, bottom: number) : void
+    {
+        this.rooms.forEach(function (room: Room) {
+            if (room.area === area) {
+                room.translate(left, bottom);
+            }
+        }, this);
     }
 
     //#endregion Grid Functions

@@ -59,6 +59,11 @@ class MMap {
             return;
         return this.selectedRoom.toggleStyle();
     }
+    toggleArea() {
+        if (!this.selectedRoom)
+            return;
+        return this.selectedRoom.toggleArea();
+    }
     getRoomAt(position) {
         for (var i = 0; i < this.rooms.length; i++) {
             if (this.rooms[i].hasBlockAt(position.x, position.y)) {
@@ -112,6 +117,13 @@ class MMap {
             }
         }, this);
         return point;
+    }
+    translateArea(area, left, bottom) {
+        this.rooms.forEach(function (room) {
+            if (room.area === area) {
+                room.translate(left, bottom);
+            }
+        }, this);
     }
     //#endregion Grid Functions
     //#region Rendering

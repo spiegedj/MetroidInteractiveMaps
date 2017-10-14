@@ -19,6 +19,7 @@ class Main {
 
     private __prevMousePosition: Point;
     private __currentStyle: string;
+    private __currentArea: string;
     private __canvasClicked: boolean = false;
     private __ctlDown: boolean = false;
     private __altDown: boolean = false;
@@ -34,6 +35,7 @@ class Main {
         this.__scale = { x: 1, y: 1 };
 
         this.game = getQueryVariable('g') || 'm0';
+        this.__currentArea = Areas.nextArea(this.game);
         var json = games[this.game];
 
         this.initCanvas();
@@ -118,17 +120,19 @@ class Main {
 
         if (this.__ctlDown) {
             this.map.addBlock(gridPosition, this.__blockType);
+            this.draw();
         } if (this.__altDown) {
             this.map.addElevatorPoint(gridPosition);
+            this.draw();
         } else {
             var block = this.map.selectRoom(gridPosition);
             if (block) 
             {
                 this.detailsPanel.setSelected(block);
+                this.__currentArea = block.getArea();
             }
+            this.draw();
         }
-
-        this.draw();
     }
 
     private __onRightClick(event: MouseEvent): boolean {
@@ -207,7 +211,7 @@ class Main {
     {
         switch (event.keyCode) {
             case 78: // N
-                this.map.addNewRoom({ grid: [], styleName: this.__currentStyle });
+                this.map.addNewRoom({ grid: [], styleName: this.__currentStyle, area: this.__currentArea });
                 this.draw();
                 break;
             case 83: // S
@@ -215,6 +219,10 @@ class Main {
                 break;
             case 90: // Z
                 this.__currentStyle = this.map.toggleStyle();
+                this.draw();
+                break;
+            case 88: // Z
+                this.__currentArea = this.map.toggleArea();
                 this.draw();
                 break;
             case 17: // Ctl
@@ -229,19 +237,35 @@ class Main {
                 break;
 
             case 37: // Left Arrow
-                this.map.addDoor(Direction.Left, this.__doorType);
+                if (this.__ctlDown) {
+                    this.map.translateArea(this.__currentArea, -1, 0);
+                } else {
+                    this.map.addDoor(Direction.Left, this.__doorType);
+                }
                 this.draw();
                 break;
             case 39: // Right Arrow
-                this.map.addDoor(Direction.Right, this.__doorType);
+                if (this.__ctlDown) {
+                    this.map.translateArea(this.__currentArea, 1, 0);
+                } else {
+                    this.map.addDoor(Direction.Right, this.__doorType);
+                }
                 this.draw();
                 break;
             case 38: // Up Arrow
-                this.map.addDoor(Direction.Up, this.__doorType);
+                if (this.__ctlDown) {
+                    this.map.translateArea(this.__currentArea, 0, -1);
+                } else {
+                    this.map.addDoor(Direction.Up, this.__doorType);
+                }
                 this.draw();
                 break;
             case 40: // Down Arrow
-                this.map.addDoor(Direction.Down, this.__doorType);
+                if (this.__ctlDown) {
+                    this.map.translateArea(this.__currentArea, 0, 1);
+                } else {
+                    this.map.addDoor(Direction.Down, this.__doorType);
+                }
                 this.draw();
                 break;
         }
@@ -262,7 +286,7 @@ class Main {
         }
 
         // Door Types
-        keys = [97,98,99,100,101];
+        keys = [97,98,99,100,101,102,103];
         i = 0;
         var doorType;
         for (doorType in DoorType) {
@@ -373,6 +397,7 @@ class Main {
 
     drawMainCanvas(): void
     {
+        redraw = this.drawMainCanvas.bind(this);
         var mainCanvasTranslation = {
             x: this.__translation.x - this.hiddenCanvasOffset.x,
             y: this.__translation.y - this.hiddenCanvasOffset.y
@@ -383,3 +408,5 @@ class Main {
         this.detailsPanel.draw();
     }
 };
+
+var redraw;

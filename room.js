@@ -81,8 +81,7 @@ class Room {
     }
     selectBlock(x, y) {
         this.__selectedBlock = this.__grid[x][y];
-        var nap = this.map.getNormAreaPos(this.area);
-        Output.write("Selected Block (" + x + "," + y + ") " + this.area + " Top-Left (" + nap.x + ", " + nap.y + ")");
+        this.debugWrite();
         return this.__selectedBlock;
     }
     deselectBlock() {
@@ -135,7 +134,37 @@ class Room {
     }
     toggleStyle() {
         this.style.nextStyle();
+        this.debugWrite();
         return this.style.styleName;
+    }
+    toggleArea() {
+        this.area = Areas.nextArea(this.map.game, this.area);
+        this.debugWrite();
+        return this.area;
+    }
+    translate(left, bottom) {
+        var newGrid = [];
+        for (var x in this.__grid) {
+            for (var y in this.__grid[x]) {
+                var newX = Number(x) + left;
+                var newY = Number(y) + bottom;
+                if (!newGrid[newX]) {
+                    newGrid[newX] = [];
+                }
+                var block = this.__grid[x][y];
+                newGrid[newX][newY] = this.__grid[x][y];
+                block.x = newX;
+                block.y = newY;
+            }
+        }
+        this.__grid = newGrid;
+    }
+    debugWrite() {
+        var nap = this.map.getNormAreaPos(this.area);
+        Output.write("Selected Block (" + this.__selectedBlock.x + "," + this.__selectedBlock.y + ") "
+            + this.area + " ---- "
+            + this.style.styleName + " ---- "
+            + " Top-Left (" + nap.x + ", " + nap.y + ")");
     }
     //#region Serialization
     serialize() {

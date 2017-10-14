@@ -14,13 +14,16 @@ enum DoorType {
     Missile = "Missile",
     SuperMissile = "SuperMissile",
     PowerBomb = "PowerBomb",
-    Hidden = "Hidden"
+    Hidden = "Hidden",
+    Blue = "Blue",
+    Yellow = "Yellow"
 }
 
 class Block {
     private __canvas: HTMLCanvasElement;
     private __ctx: CanvasRenderingContext2D;
     private __room: Room;
+    private __timeoutHandle: number;
     private doors: Map<Direction, DoorType>;
 
     public blockType: string;
@@ -76,6 +79,28 @@ class Block {
         }
 
         ctx.fillRect(x * size, y * size, size + 1, size + 1);
+
+        clearTimeout(this.__timeoutHandle);
+        this.__timeoutHandle = setTimeout(function() {
+            var areaImage: HTMLImageElement = Areas[this.__room.map.game][this.getArea()];
+            if (areaImage) {
+                var rippedDims = games[this.__room.map.game].rippedDims;
+
+                var normAreaPoint = this.__room.map.getNormAreaPos(this.getArea());
+                var sourceX = (this.x - normAreaPoint.x) * rippedDims.width;
+                var sourceY = (this.y - normAreaPoint.y) * rippedDims.height;
+                var sourceWidth = rippedDims.width;
+                var sourceHeight = rippedDims.height;
+                var destX = x * size;
+                var destY = y * size;
+                var destWidth = size;
+                var destHeight = size;
+
+                this.__ctx.drawImage(areaImage, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
+                redraw();
+            }
+        }.bind(this), 0);
+
 
         //Top Border
         if (!this.__room.hasBlockAt(x, y - 1)) {
@@ -203,6 +228,14 @@ class Block {
                     break;
                 case DoorType.PowerBomb:
                     var doorColor = "rgb(246,255,0)";
+                    this.__normalDoor(size, direction, doorColor);
+                    break;
+                case DoorType.Blue:
+                    var doorColor = "rgb(2,1,234)";
+                    this.__normalDoor(size, direction, doorColor);
+                    break;
+                case DoorType.Yellow:
+                    var doorColor = "rgb(255,253,67)";
                     this.__normalDoor(size, direction, doorColor);
                     break;
                 case DoorType.Normal:

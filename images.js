@@ -11,12 +11,17 @@ Images.BuildImages = function Images$BuildImages(game, callback) {
         }
     }
     for (var areaName in Areas[game]) {
-        Areas[game][areaName] = new Image();
-        Areas[game][areaName].src = 'images/' + game + '/' + areaName + '.png';
+        if (areaName !== "Elevator") {
+            Areas[game][areaName] = new Image();
+            Areas[game][areaName].src = 'images/' + game + '/' + areaName + '.png';
+        }
     }
-    Images[key].onload = callback;
+    // if (!key) { return; }
+    // Images[key].onload = callback;
+    Areas[game][areaName].onload = callback;
 };
-var Areas = {
+var Areas = {};
+Areas = {
     m0: {
         Crateria: {},
         Brinstar: {},
@@ -34,6 +39,24 @@ var Areas = {
         Maridia: {},
         Norfair: {},
     },
+    m4: {
+        "Main Deck": {},
+        "Sector 1": {},
+        "Sector 2": {},
+        "Sector 3": {},
+        "Sector 4": {},
+        "Sector 5": {},
+        "Sector 6": {},
+    }
+};
+Areas.nextArea = function (game, curArea) {
+    var areas = Object.keys(Areas[game]);
+    for (var i = 0; i < areas.length; i++) {
+        if (areas[i] === curArea) {
+            return areas[(i + 1) % areas.length];
+        }
+    }
+    return areas[0];
 };
 var BlockTypes = {};
 BlockTypes.m0 = {
@@ -95,6 +118,18 @@ BlockTypes.m3 = {
     XRayScope: {},
     Missile2: {},
     MissileSuperMissile: {},
+};
+BlockTypes.m4 = {
+    Normal: { noImage: true },
+    Save: { scale: .05, outlined: true },
+    Navigation: { scale: .05, outlined: true },
+    Recharge: { scale: .05, outlined: true },
+    Data: { scale: .05, outlined: true },
+    TunnelHorizontal: { noImage: true, outlined: true },
+    TunnelVertical: { noImage: true, outlined: true },
+    Missile: {},
+    EnergyTank: {},
+    PowerBomb: {}
 };
 var ItemDetails = {
     Missile: {

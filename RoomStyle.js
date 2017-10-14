@@ -63,6 +63,20 @@ RoomStyle.Styles = {
             lineColor: 'rgb(255,253,249)',
             roomColor: "rgb(0,0,0)",
         }
-    }
+    },
+    m4: {
+        Normal: {
+            lineColor: 'rgb(255,253,249)',
+            roomColor: "rgb(189,0,198)",
+        },
+        Hidden: {
+            lineColor: 'rgb(255,253,249)',
+            roomColor: "rgb(43,139,79)"
+        },
+        Hot: {
+            lineColor: 'rgb(255,253,249)',
+            roomColor: "rgb(254,105,25)"
+        }
+    },
 };
 ;
